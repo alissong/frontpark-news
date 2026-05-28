@@ -49,6 +49,8 @@ npm run preview   # serve o build em http://localhost:4173/
 
 ## Configurando o conteúdo (Google Sheets)
 
+> **Atalho — modelos prontos para importar:** a pasta [`exemplos/`](./exemplos) tem `Conteudo.csv` e `Galeria.csv` já preenchidos. No Google Sheets, crie uma planilha, vá em **Arquivo → Importar → Fazer upload**, selecione o CSV e escolha **"Inserir nova(s) planilha(s)"**. Depois **renomeie as abas** para `Conteudo` e `Galeria`. Pronto: é só ajustar os textos.
+
 1. Crie uma planilha no Google Sheets.
 2. Em **Compartilhar**, defina como **"Qualquer pessoa com o link pode ver"**.
 3. Copie o **ID** da planilha (na URL: `https://docs.google.com/spreadsheets/d/`**`<ID>`**`/edit`).
