@@ -1,0 +1,4 @@
+tipo,url,titulo,data,descricao,categoria
+video,https://res.cloudinary.com/demo/video/upload/dog.mp4,Poda da grama,2026-05-20,Manutenção mensal dos jardins e áreas verdes.,Manutenção
+foto,https://res.cloudinary.com/demo/image/upload/sample.jpg,Confraternização,2026-05-10,Encontro dos moradores no salão de festas.,Eventos
+foto,https://res.cloudinary.com/demo/image/upload/sample.jpg,Nova iluminação da garagem,2026-04-28,Troca por lâmpadas de LED concluída.,Obras
