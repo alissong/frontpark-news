@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchContent } from "./lib/content";
+import Gallery from "./Gallery";
 
 // Mapa fixo de cores para os avisos. Usar classes literais garante que o
 // Tailwind as detecte (classes geradas dinamicamente seriam removidas no build).
@@ -212,6 +213,10 @@ export default function FrontParkNews() {
             )}
           </div>
         </div>
+
+        {/* Galeria de Ações & Eventos */}
+        <Gallery items={data.gallery || []} />
+
         {/* Footer */}
         <footer className="bg-slate-900 text-white p-8 text-center">
           <p className="text-lg leading-relaxed opacity-90 max-w-3xl mx-auto">

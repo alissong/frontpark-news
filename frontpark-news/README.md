@@ -69,6 +69,28 @@ Exemplo de preenchimento:
 - **`value`** e **`extra`**: em `summary` o `value` é o número e o `extra` é o rótulo; em `warnings` o `value` é o título e o `extra` é a descrição.
 - **`level`** (só em `warnings`): cor da borda do aviso — `alerta` (vermelho), `aviso` (âmbar), `info` (azul) ou `ok` (verde).
 
+## Galeria de Ações & Eventos (fotos e vídeos)
+
+A página tem uma seção de galeria (grade com lightbox) alimentada por uma **segunda aba** da mesma planilha, chamada **`Galeria`** (configurável via `VITE_GALLERY_SHEET`). Diferente da aba de conteúdo, aqui cada **linha é um item de mídia** e as colunas são diretas:
+
+| tipo | url | titulo | data | descricao | categoria |
+|---|---|---|---|---|---|
+| video | https://res.cloudinary.com/SEU/video/upload/poda.mp4 | Poda da grama | 2026-05-20 | Manutenção dos jardins | Manutenção |
+| foto | https://res.cloudinary.com/SEU/image/upload/festa.jpg | Festa junina | 2026-06-15 | Confraternização no salão | Eventos |
+
+- **`tipo`**: `video` ou `foto` (se ficar em branco, é detectado pela extensão do arquivo).
+- **`url`**: link direto da mídia.
+- **`data`**: use o formato `aaaa-mm-dd` (os itens são ordenados do mais recente ao mais antigo).
+- **`categoria`**: opcional; quando há categorias, aparece um filtro (ex.: Manutenção, Eventos, Obras).
+
+### Hospedando as mídias no Cloudinary (grátis)
+
+1. Crie uma conta em [cloudinary.com](https://cloudinary.com).
+2. Suba a foto/vídeo no **Media Library**.
+3. Copie a **URL** do arquivo (botão de compartilhar/copiar link) e cole na coluna `url`.
+
+> Vídeos tocam direto na página (player nativo) e fotos abrem ampliadas no lightbox. Sem essa aba, a galeria simplesmente não aparece.
+
 ## Build de produção
 
 ```bash

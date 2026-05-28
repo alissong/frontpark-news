@@ -14,6 +14,8 @@
 
 const SHEET_ID = import.meta.env.VITE_SHEET_ID;
 const SHEET_NAME = import.meta.env.VITE_SHEET_NAME || "Conteudo";
+// Aba com os itens de mídia (fotos/vídeos) da galeria de ações e eventos.
+const GALLERY_SHEET = import.meta.env.VITE_GALLERY_SHEET || "Galeria";
 
 // Conteúdo de exemplo exibido quando nenhuma planilha está configurada.
 // Garante que a página sempre renderize algo coerente.
@@ -84,6 +86,32 @@ export const SAMPLE_DATA = {
       "Este informativo é produzido pela administração do condomínio. Dúvidas e sugestões podem ser enviadas à portaria ou pelo aplicativo.",
     thanks: "Obrigado por fazer parte do Front Park! 💚",
   },
+  gallery: [
+    {
+      type: "video",
+      url: "https://res.cloudinary.com/demo/video/upload/dog.mp4",
+      title: "Poda da grama",
+      date: "2026-05-20",
+      description: "Manutenção mensal dos jardins e áreas verdes.",
+      category: "Manutenção",
+    },
+    {
+      type: "foto",
+      url: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      title: "Confraternização",
+      date: "2026-05-10",
+      description: "Encontro dos moradores no salão de festas.",
+      category: "Eventos",
+    },
+    {
+      type: "foto",
+      url: "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+      title: "Nova iluminação da garagem",
+      date: "2026-04-28",
+      description: "Troca por lâmpadas de LED concluída.",
+      category: "Obras",
+    },
+  ],
 };
 
 // Parser de CSV que respeita aspas, vírgulas e quebras de linha dentro de campos.
@@ -209,17 +237,82 @@ function rowsToData(rows) {
   return data;
 }
 
+// Monta a URL do endpoint CSV (gviz) para uma aba específica da planilha.
+function gvizUrl(sheetName) {
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
+    sheetName
+  )}`;
+}
+
+// Converte as linhas da aba "Galeria" numa lista de itens de mídia.
+function rowsToGallery(rows) {
+  if (rows.length === 0) return [];
+
+  const header = rows[0].map((h) => h.trim().toLowerCase());
+  const find = (...names) => header.findIndex((h) => names.includes(h));
+  const col = {
+    type: find("tipo", "type"),
+    url: find("url", "link"),
+    title: find("titulo", "título", "title"),
+    date: find("data", "date"),
+    description: find("descricao", "descrição", "description"),
+    category: find("categoria", "category"),
+  };
+
+  const get = (cols, i) => (i >= 0 ? (cols[i] ?? "").trim() : "");
+  const items = [];
+
+  for (let i = 1; i < rows.length; i++) {
+    const cols = rows[i];
+    const url = get(cols, col.url);
+    if (!url) continue;
+
+    let type = get(cols, col.type).toLowerCase();
+    if (type !== "video" && type !== "foto") {
+      // Detecta pelo formato do arquivo quando o tipo não é informado.
+      type = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(url) ? "video" : "foto";
+    }
+
+    items.push({
+      type,
+      url,
+      title: get(cols, col.title),
+      date: get(cols, col.date),
+      description: get(cols, col.description),
+      category: get(cols, col.category),
+    });
+  }
+
+  // Mais recentes primeiro (datas ISO yyyy-mm-dd ordenam corretamente como texto).
+  items.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  return items;
+}
+
+async function fetchGallery(signal) {
+  try {
+    const res = await fetch(gvizUrl(GALLERY_SHEET), { signal });
+    if (!res.ok) return [];
+    const text = await res.text();
+    // Aba inexistente devolve uma página HTML de erro em vez de CSV.
+    if (text.trimStart().startsWith("<")) return [];
+    return rowsToGallery(parseCsv(text));
+  } catch (err) {
+    if (err.name === "AbortError") throw err;
+    return [];
+  }
+}
+
 export async function fetchContent(signal) {
   if (!SHEET_ID) {
     // Sem planilha configurada: usa o conteúdo de exemplo.
     return SAMPLE_DATA;
   }
 
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
-    SHEET_NAME
-  )}`;
+  const [res, gallery] = await Promise.all([
+    fetch(gvizUrl(SHEET_NAME), { signal }),
+    fetchGallery(signal),
+  ]);
 
-  const res = await fetch(url, { signal });
   if (!res.ok) {
     throw new Error("Não foi possível carregar a planilha do informativo.");
   }
@@ -231,5 +324,6 @@ export async function fetchContent(signal) {
     throw new Error("A planilha foi carregada, mas está vazia ou em formato inesperado.");
   }
 
+  data.gallery = gallery;
   return data;
 }
