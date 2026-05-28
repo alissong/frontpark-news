@@ -166,14 +166,24 @@ function parseCsv(text) {
 function rowsToData(rows) {
   if (rows.length === 0) return null;
 
-  const header = rows[0].map((h) => h.trim().toLowerCase());
-  const idx = {
-    section: header.indexOf("section"),
-    key: header.indexOf("key"),
-    value: header.indexOf("value"),
-    extra: header.indexOf("extra"),
-    level: header.indexOf("level"),
-  };
+  // O endpoint do Google às vezes inclui a linha de cabeçalho, às vezes não.
+  // Procuramos a linha que contém "section"; se não existir, assumimos a ordem
+  // fixa das colunas e tratamos todas as linhas como dados.
+  const FIELDS = ["section", "key", "value", "extra", "level"];
+  const headerRow = rows.findIndex((r) =>
+    r.some((c) => c.trim().toLowerCase() === "section")
+  );
+
+  let idx;
+  let startRow;
+  if (headerRow >= 0) {
+    const header = rows[headerRow].map((h) => h.trim().toLowerCase());
+    idx = Object.fromEntries(FIELDS.map((f) => [f, header.indexOf(f)]));
+    startRow = headerRow + 1;
+  } else {
+    idx = { section: 0, key: 1, value: 2, extra: 3, level: 4 };
+    startRow = 0;
+  }
 
   const data = {
     highlights: {},
@@ -189,7 +199,7 @@ function rowsToData(rows) {
 
   const get = (cols, name) => (idx[name] >= 0 ? (cols[idx[name]] ?? "").trim() : "");
 
-  for (let i = 1; i < rows.length; i++) {
+  for (let i = startRow; i < rows.length; i++) {
     const cols = rows[i];
     const section = get(cols, "section").toLowerCase();
     const key = get(cols, "key").toLowerCase();
@@ -248,21 +258,35 @@ function gvizUrl(sheetName) {
 function rowsToGallery(rows) {
   if (rows.length === 0) return [];
 
-  const header = rows[0].map((h) => h.trim().toLowerCase());
-  const find = (...names) => header.findIndex((h) => names.includes(h));
-  const col = {
-    type: find("tipo", "type"),
-    url: find("url", "link"),
-    title: find("titulo", "título", "title"),
-    date: find("data", "date"),
-    description: find("descricao", "descrição", "description"),
-    category: find("categoria", "category"),
-  };
+  // Detecta a linha de cabeçalho (procura "url"); sem cabeçalho, usa a ordem
+  // fixa das colunas: tipo | url | titulo | data | descricao | categoria.
+  const headerRow = rows.findIndex((r) =>
+    r.some((c) => ["url", "link"].includes(c.trim().toLowerCase()))
+  );
+
+  let col;
+  let startRow;
+  if (headerRow >= 0) {
+    const header = rows[headerRow].map((h) => h.trim().toLowerCase());
+    const find = (...names) => header.findIndex((h) => names.includes(h));
+    col = {
+      type: find("tipo", "type"),
+      url: find("url", "link"),
+      title: find("titulo", "título", "title"),
+      date: find("data", "date"),
+      description: find("descricao", "descrição", "description"),
+      category: find("categoria", "category"),
+    };
+    startRow = headerRow + 1;
+  } else {
+    col = { type: 0, url: 1, title: 2, date: 3, description: 4, category: 5 };
+    startRow = 0;
+  }
 
   const get = (cols, i) => (i >= 0 ? (cols[i] ?? "").trim() : "");
   const items = [];
 
-  for (let i = 1; i < rows.length; i++) {
+  for (let i = startRow; i < rows.length; i++) {
     const cols = rows[i];
     const url = get(cols, col.url);
     if (!url) continue;
@@ -318,10 +342,21 @@ export async function fetchContent(signal) {
   }
 
   const text = await res.text();
+
+  // Quando a planilha não está pública, o Google devolve uma página HTML
+  // (login/permissão) em vez do CSV.
+  if (text.trimStart().startsWith("<")) {
+    throw new Error(
+      'Não foi possível ler a planilha. Verifique se o compartilhamento está como "Qualquer pessoa com o link" (Leitor).'
+    );
+  }
+
   const data = rowsToData(parseCsv(text));
 
   if (!data || !data.title) {
-    throw new Error("A planilha foi carregada, mas está vazia ou em formato inesperado.");
+    throw new Error(
+      'A planilha foi lida, mas não encontrei o conteúdo esperado. Confira o nome da aba (VITE_SHEET_NAME) e o cabeçalho "section, key, value, extra, level".'
+    );
   }
 
   data.gallery = gallery;
