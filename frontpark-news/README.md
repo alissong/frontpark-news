@@ -6,12 +6,46 @@ O conteúdo é gerenciado por uma **planilha do Google Sheets** — sem necessid
 
 ## Como rodar localmente
 
+### Pré-requisitos
+
+- **Node.js 18 ou superior** (recomendado 20+). Verifique com `node -v`. Se não tiver, baixe em [nodejs.org](https://nodejs.org).
+- O **npm** já vem junto com o Node.
+
+### Passo a passo
+
+> O projeto fica na pasta `frontpark-news/`. Rode os comandos a partir dela.
+
 ```bash
+# 1. Entre na pasta do projeto
+cd frontpark-news
+
+# 2. Instale as dependências (só na primeira vez)
 npm install
+
+# 3. Inicie o servidor de desenvolvimento
 npm run dev
 ```
 
-Sem configurar a planilha, a página exibe um **conteúdo de exemplo**.
+O terminal vai mostrar algo como:
+
+```
+  VITE v8.x  ready in 300 ms
+
+  ➜  Local:   http://localhost:5173/
+```
+
+Abra **http://localhost:5173/** no navegador. A página recarrega sozinha a cada alteração no código (hot reload). Para parar o servidor, pressione **Ctrl + C**.
+
+Sem configurar a planilha, a página já abre com um **conteúdo de exemplo** (incluindo a galeria), então dá para ver tudo funcionando antes de conectar o Google Sheets.
+
+### Visualizar o build de produção localmente
+
+Para conferir exatamente o que vai pro ar:
+
+```bash
+npm run build     # gera a pasta dist/
+npm run preview   # serve o build em http://localhost:4173/
+```
 
 ## Configurando o conteúdo (Google Sheets)
 
@@ -91,11 +125,8 @@ A página tem uma seção de galeria (grade com lightbox) alimentada por uma **s
 
 > Vídeos tocam direto na página (player nativo) e fotos abrem ampliadas no lightbox. Sem essa aba, a galeria simplesmente não aparece.
 
-## Build de produção
+## Build e publicação
 
-```bash
-npm run build
-npm run preview
-```
+Gere os arquivos estáticos com `npm run build` (saída na pasta `dist/`) e publique-os em qualquer hospedagem estática (Vercel, Netlify, GitHub Pages, etc.). Para conferir o build localmente antes, use `npm run preview` (veja [Visualizar o build de produção localmente](#visualizar-o-build-de-produção-localmente)).
 
-> As variáveis `VITE_*` são embutidas no build. Ao publicar, configure-as no painel da hospedagem (ou no `.env` antes do build).
+> As variáveis `VITE_*` são embutidas no build. Ao publicar, configure-as no painel da hospedagem (ou no `.env` antes de rodar `npm run build`).
