@@ -342,20 +342,30 @@ export async function fetchContent(signal) {
   }
 
   const text = await res.text();
+  const head = text.trimStart();
 
   // Quando a planilha não está pública, o Google devolve uma página HTML
   // (login/permissão) em vez do CSV.
-  if (text.trimStart().startsWith("<")) {
+  if (head.startsWith("<")) {
     throw new Error(
       'Não foi possível ler a planilha. Verifique se o compartilhamento está como "Qualquer pessoa com o link" (Leitor).'
+    );
+  }
+
+  // O gviz responde com um embrulho JSONP (/*O_o*/google.visualization...)
+  // quando o CSV não é aplicado ou há erro — ex.: nome de aba incorreto.
+  if (head.startsWith("/*") || head.startsWith("google.visualization")) {
+    throw new Error(
+      `Não consegui ler a aba "${SHEET_NAME}". Confira se o nome da aba (VITE_SHEET_NAME) está exatamente igual ao da planilha e se ela está pública.`
     );
   }
 
   const data = rowsToData(parseCsv(text));
 
   if (!data || !data.title) {
+    const preview = text.slice(0, 120).replace(/\s+/g, " ").trim();
     throw new Error(
-      'A planilha foi lida, mas não encontrei o conteúdo esperado. Confira o nome da aba (VITE_SHEET_NAME) e o cabeçalho "section, key, value, extra, level".'
+      `A planilha foi lida, mas não encontrei o conteúdo esperado (resposta começa com: "${preview}"). Confira o cabeçalho "section, key, value, extra, level".`
     );
   }
 
