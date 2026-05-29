@@ -248,8 +248,10 @@ function rowsToData(rows) {
 }
 
 // Monta a URL do endpoint CSV (gviz) para uma aba específica da planilha.
+// headers=1 força o gviz a tratar exatamente 1 linha de cabeçalho — sem isso,
+// quando as primeiras linhas só têm texto, ele mescla várias como cabeçalho.
 function gvizUrl(sheetName) {
-  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
+  return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(
     sheetName
   )}`;
 }
